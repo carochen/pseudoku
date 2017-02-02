@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html><head>
+<style>
+  div { position: absolute; font: normal 12px arial,sans-serif; overflow: hidden; }
+  div.cell { width: 18px; height: 18px; color: #1e90ff; font: bold 12px arial,sans-serif; background-color: transparent; border-style: solid; border-width: 1px; border-color: #7f7f7f; text-align: center; vertical-align: middle; }
+  div.cellseed { width: 18px; height: 18px; font: bold 12px arial,sans-serif; background-color: transparent; border-style: solid; border-width: 1px; border-color: #7f7f7f; text-align: center; vertical-align: middle; }
+  div.area3x3 { width: 60px; height: 60px; background-color: #c4dcf2; z-index: -1}
+</style>
+</head>
+<body>
+<div class="input_numbers" id="input_numbers" style="position: fixed; left:0px; top:0px; width:220px; height:22px; background-color: white;"></div>
+<div class="sudoku" id="sudoku" style="top: 25px; width: 180px; height: 180px; border-style: solid; border-width: 2px; border-color: gray;"></div>
+<div class="games" id="games" style="position: fixed; left:0px; top:220px; width:200px; background-color: white;"></div>
+<script>
+var grids =
+ [
+  [
+    ["","","","",6,7,"","",""],
+    [8,"","","",9,"",3,"",4],
+    ["",4,9,3,8,"","","",5],
+    [6,"","",7,5,"",4,3,9],
+    ["",9,"","","",4,"",8,1],
+    [5,"","","","",3,2,6,7],
+    ["",6,3,1,"",2,"","",""],
+    [7,"",2,8,"","","",4,""],
+    [9,1,"","","","","",2,""]
+  ],
+  [
+    ["","","","","","","","",""],
+    [8,"","","",9,"",3,"",4],
+    ["",4,9,3,8,"","","",5],
+    [6,"","",7,5,"",4,3,9],
+    ["",9,"","","",4,"",8,1],
+    [5,"","","","",3,2,6,7],
+    ["",6,3,1,"",2,"","",""],
+    [7,"",2,8,"","","",4,""],
+    [9,1,"","","","","",2,""]
+  ],
+  [
+    ["","","","","","","","",""],
+    [8,"","","",9,"",3,"",4],
+    ["",4,9,3,8,"","","",5],
+    [6,"","",7,5,"",4,3,9],
+    ["",9,"","","",4,"",8,1],
+    [5,"","","","",3,2,6,7],
+    ["",6,3,1,"",2,"","",""],
+    [7,"",2,8,"","","",4,""],
+    ["","","","","","","","",""]
+  ]
+ ];
+var grid = grids[0];
+
+// global variables
+var g_h = ""; // The string to be set to the sudoku div
+var g_xstep = 20;
+var g_ystep = 20;
+var g_last_clicked_cell_id = "2_2";
+
+// gefine the workhorse functions
+function typeGrid(grid) {
+  var pointr = ""
+}
+
+function setValue(value) {
+  if (changeable == false) {
+    //alert("no change");
+    return;
+  }
+  var res = g_last_clicked_cell_id.split("_");
+  var validity = validateCell(value, res[0], res[1]);
+  grid[res[0]][res[1]] = value; // update model
+  document.getElementById(g_last_clicked_cell_id).innerHTML = value; // update visual
+  if (validity == false) {
+    document.getElementById(g_last_clicked_cell_id).style.borderColor = "#ff0000";
+  } else {
+    //alert("gray, " + res[0] + ", " + res[1]);
+    document.getElementById(g_last_clicked_cell_id).style.borderColor = "#7f7f7f"; // color must be consistent with default cell border
+  }
+}
+
+function setLastClickedCellId(value, boole) {
+  if (boole == 1) {
+    //alert("if");
+    changeable = true
+    document.getElementById(g_last_clicked_cell_id).style.backgroundColor = "transparent"; // unset previously clicked
+    g_last_clicked_cell_id = value;
+    document.getElementById(g_last_clicked_cell_id).style.backgroundColor = "#afffaf";
+  } else {
+    //alert("else");
+    changeable = false
+    document.getElementById(g_last_clicked_cell_id).style.backgroundColor = "transparent"; // unset previously clicked
+    g_last_clicked_cell_id = value;
+    document.getElementById(g_last_clicked_cell_id).style.backgroundColor = "#afffaf";
+  }
+}
+
+function validateCell(value, x, y) { // indicate whether input value causes any conflict
+  var q_i = (Math.floor(x / 3) * 3);
+  var q_j = (Math.floor(y / 3) * 3);
+  //alert(q_i + " " + q_j + " " + value);
+  for (j = q_j; j < (q_j + 3); j++) { // validate quadrant
+    for (i = q_i; i < (q_i + 3); i++) {
+      if ((j != y) || (i != x)) {
+        //alert(value + ", " + grid[i][j] + ": " + i + "," + j);
+        if (grid[i][j] == value) {
+          //alert("false quad");
+          return false;
+        }
+      }
+    }
+  }
+
+  for (j = 0; j < 9; j++) { // validate row
+    if (j != y) {
+      if (grid[x][j] == value) {
+        //alert("false row");
+        return false;
+      }
+    }
+  }
+
+  for (i = 0; i < 9; i++) { // validate column
+    if (i != x) {
+      if (grid[i][y] == value) {
+        //alert("false column");
+        return false;
+      }
+    }
+  }
+
+  //alert("true");
+  return true;
+}
+
+function drawGame() {
+  g_h = ""; // clear g_h before reusing
+  for (i = 1; i <= 9; i++) {
+    g_h += '<button onclick="setValue(\'' + i + '\')">' + i + '</button>';
+  }
+  document.getElementById("input_numbers").innerHTML = g_h;
+
+  g_h = ""; // clear g_h
+  for (i = 0; i < grid.length; i++) {
+    for (j = 0; j < grid[i].length; j++) {
+      if (grid[i][j] == "") {
+        var vv = 1;
+        g_h += '<div class="cell" id="' + i + '_' + j + '" style="left: ' + (j * g_xstep) + 'px; top: ' + (i * g_ystep) + 'px;" onclick="setLastClickedCellId(\'' + i + '_' + j + '\',' + " " + vv + ')">' + grid[i][j] + '</div>';
+      } else {
+        var vv = 0;
+        g_h += '<div class="cellseed" id="' + i + '_' + j + '" style="left: ' + (j * g_xstep) + 'px; top: ' + (i * g_ystep) + 'px;" onclick="setLastClickedCellId(\'' + i + '_' + j + '\',' + " " + vv + ')">' + grid[i][j] + '</div>';
+      }
+      if ((i % 3) == 0 && (j % 3) == 0 && ((i + j) % 6) == 0) {
+        g_h += '<div class="area3x3" style="left: ' + (j * g_xstep) + 'px; top: ' + (i * g_ystep) + 'px;">' + '</div>';
+      }
+    }
+  }
+  document.getElementById("sudoku").innerHTML = g_h;
+
+  g_h = ""; // clear g_h before reusing
+  for (i = 0; i < grids.length; i++) {
+    g_h += '<button onclick="selectNewGame(\'' + i + '\')">Game ' + i + '</button>';
+  }
+  document.getElementById("games").innerHTML = g_h;
+}
+
+function selectNewGame(game_num){
+  grid = grids[game_num];
+  // clear whatever is currently on the screen
+  document.getElementById("input_numbers").innerHTML = "";
+  document.getElementById("sudoku").innerHTML = "";
+  document.getElementById("games").innerHTML = "";
+
+  drawGame();
+}
+
+drawGame();
+
+</script>
+
+
+
+</body></html>
